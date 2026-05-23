@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { access, mkdir, stat, writeFile } from "node:fs/promises";
+import { access, mkdir, rm, stat, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { spawn } from "node:child_process";
 import { join } from "node:path";
@@ -16,6 +16,7 @@ import {
   overlayPidFile,
   root,
   serverPidFile,
+  swiftModuleCacheDir,
   swiftSource
 } from "../lib/config.js";
 
@@ -57,7 +58,7 @@ function run(command, args) {
       stdio: "ignore",
       env: {
         ...process.env,
-        CLANG_MODULE_CACHE_PATH: join(root, ".build", "module-cache")
+        CLANG_MODULE_CACHE_PATH: swiftModuleCacheDir
       }
     });
     child.on("error", reject);
@@ -96,7 +97,8 @@ async function main() {
     }
 
     if (await needsBuild()) {
-      await mkdir(join(root, ".build", "module-cache"), { recursive: true });
+      await rm(swiftModuleCacheDir, { recursive: true, force: true });
+      await mkdir(swiftModuleCacheDir, { recursive: true });
       await run("swiftc", [
         "macos/RobotPetOverlay.swift",
         "-framework",
