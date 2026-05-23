@@ -1,0 +1,26 @@
+@import "desktop.css";
+
+.controls {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  display: flex;
+  gap: 6px;
+  transform: translateX(-50%);
+}
+
+.controls button {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: rgba(244, 244, 236, 0.84);
+  font: inherit;
+  font-size: 11px;
+  line-height: 1;
+  background: rgba(18, 20, 18, 0.72);
+  cursor: pointer;
+  padding: 6px 8px;
+}
+
+.controls button:hover {
+  background: rgba(31, 48, 52, 0.84);
+}
