@@ -84,7 +84,7 @@ Requirements:
 
 - `server.js`: local event server.
 - Native overlay app: transparent, frameless, always-on-top macOS window.
-- `public/desktop.html`: desktop pet UI.
+- `public/index.html`: shared pet UI served for both the preview page and `/desktop.html`.
 - `public/desktop.css`: desktop pet styling.
 - `public/app.js`: event handling, state transitions, drag/close bridge.
 - Hook scripts:

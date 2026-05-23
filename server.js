@@ -117,7 +117,7 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    const requested = url.pathname === "/" || url.pathname === "/claude-notification"
+    const requested = url.pathname === "/" || url.pathname === "/claude-notification" || url.pathname === "/desktop.html"
       ? "/index.html"
       : url.pathname;
     const safePath = normalize(requested).replace(/^(\.\.[/\\])+/, "");

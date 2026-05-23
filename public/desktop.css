@@ -223,6 +223,7 @@ body {
 
 .pet-shell[data-multi-project="true"] .project-tray {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .project-bubble {
@@ -233,12 +234,21 @@ body {
   border-radius: 8px;
   background: rgba(18, 20, 18, 0.88);
   color: rgba(244, 244, 236, 0.88);
+  font: inherit;
+  text-align: left;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(14px);
+  cursor: pointer;
 }
 
 .project-bubble[data-urgent="true"] {
   border-color: rgba(255, 216, 143, 0.72);
+}
+
+.project-bubble:hover,
+.project-bubble:focus-visible {
+  background: rgba(31, 48, 52, 0.92);
+  outline: none;
 }
 
 .project-bubble-head {

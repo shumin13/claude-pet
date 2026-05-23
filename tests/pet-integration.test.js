@@ -83,10 +83,10 @@ async function runNodeCheck(path) {
 }
 
 async function assertStaticPreviewUsesRelativeAssets() {
-  const desktop = await readFile(new URL("../public/desktop.html", import.meta.url), "utf8");
-  assert.match(desktop, /href="desktop\.css"/);
-  assert.match(desktop, /src="app\.js"/);
-  assert.doesNotMatch(desktop, /href="\/desktop\.css"|src="\/app\.js"/);
+  const page = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  assert.match(page, /href="styles\.css"/);
+  assert.match(page, /src="app\.js"/);
+  assert.doesNotMatch(page, /href="\/styles\.css"|src="\/app\.js"/);
 }
 
 async function assertDesktopBuildExists() {

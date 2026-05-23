@@ -8,6 +8,10 @@ const collapseButton = document.querySelector(".collapse-button");
 const resizeHandle = document.querySelector(".resize-handle");
 const projectTray = document.querySelector("#projectTray");
 
+document.documentElement.dataset.mode = window.location.pathname.endsWith("/desktop.html")
+  ? "desktop"
+  : "preview";
+
 const minScale = 0.86;
 const maxScale = 1.58;
 const defaultScale = 1;
@@ -43,6 +47,12 @@ const copy = {
     label: "Done",
     title: "Job done",
     message: "Claude finished the current response."
+  },
+  auth_success: {
+    type: "auth_success",
+    label: "Success",
+    title: "Permission granted",
+    message: "Claude can continue now."
   },
   elicitation_dialog: {
     type: "elicitation_dialog",
@@ -154,9 +164,12 @@ function renderProjectTray(groups = projectGroups()) {
   if (!projectTray) return;
   projectTray.replaceChildren();
   for (const group of groups) {
-    const bubble = document.createElement("article");
+    const bubble = document.createElement("button");
     bubble.className = "project-bubble";
+    bubble.type = "button";
+    bubble.dataset.project = group.label;
     bubble.dataset.urgent = String(group.urgent);
+    bubble.title = `Show ${group.label}`;
 
     const head = document.createElement("div");
     head.className = "project-bubble-head";
@@ -204,6 +217,16 @@ function projectGroups() {
   return [...groups.values()].sort((a, b) => b.rank - a.rank);
 }
 
+function selectProject(label) {
+  const items = notificationItems();
+  const selected = items.find(event => projectLabel(event) === label);
+  if (!selected) return;
+  currentEvent = selected;
+  queue = items.filter(event => event !== selected);
+  expandNotifications();
+  render();
+}
+
 function popNext() {
   queue.sort((a, b) => priority(b) - priority(a));
   currentEvent = queue.shift() || normalizeEvent(copy.ready);
@@ -213,6 +236,13 @@ function popNext() {
 
 function showEvent(event) {
   currentEvent = event;
+  expandNotifications();
+  render();
+}
+
+function overrideEvent(rawEvent) {
+  currentEvent = normalizeEvent(rawEvent);
+  queue = [];
   expandNotifications();
   render();
 }
@@ -341,9 +371,16 @@ function setScale(scale, persist = true) {
 for (const button of document.querySelectorAll("[data-demo]")) {
   button.addEventListener("click", () => {
     const type = button.dataset.demo;
-    applyEvent({ type, ...copy[type] });
+    overrideEvent({ type, ...copy[type] });
   });
 }
+
+projectTray?.addEventListener("click", event => {
+  const bubble = event.target.closest?.("[data-project]");
+  if (!bubble) return;
+  event.stopPropagation();
+  selectProject(bubble.dataset.project);
+});
 
 collapseButton?.addEventListener("click", event => {
   event.stopPropagation();

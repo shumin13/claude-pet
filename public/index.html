@@ -9,12 +9,17 @@
   <body>
     <main class="stage" aria-live="polite">
       <section class="pet-shell" data-state="ready">
+        <div class="utility-controls" aria-label="Pet controls">
+          <button class="collapse-button" type="button" title="Collapse notification" aria-label="Collapse notification">−</button>
+          <button class="close-button" type="button" title="Close pet" aria-label="Close pet">×</button>
+        </div>
+        <button class="collapsed-badge" id="collapsedBadge" type="button" aria-label="Show notifications">0</button>
         <div class="speech" id="speech">
           <p class="eyebrow" id="eventType">Ready</p>
           <h1 id="eventTitle">Claude Pet is awake</h1>
           <p id="eventMessage">Waiting for Claude Code notifications.</p>
         </div>
-
+        <div class="project-tray" id="projectTray" aria-label="Queued projects"></div>
         <div class="pet-wrap" aria-label="Cute robot notification pet">
           <svg class="pet" viewBox="0 0 180 180" role="img" aria-labelledby="petTitle">
             <title id="petTitle">Claude Pet, a cute rounded robot</title>
@@ -40,7 +45,7 @@
             <ellipse class="shadow" cx="90" cy="156" rx="46" ry="10"/>
             <g class="robot">
               <g class="antenna">
-                <path d="M90 54 L90 23" />
+                <path d="M90 54 L90 23"/>
                 <circle cx="90" cy="19" r="9"/>
               </g>
               <g class="robot-body" filter="url(#robotShadow)">
@@ -59,8 +64,8 @@
                 <path class="brow left-brow" d="M67 78 L82 82"/>
                 <path class="brow right-brow" d="M98 82 L113 78"/>
                 <path class="mouth" d="M77 105 C84 111 96 111 103 105"/>
-                <path class="success-mouth" d="M75 102 C82 115 98 115 105 102"/>
-                <path class="permission-mouth" d="M82 106 C86 102 94 102 98 106"/>
+                <path class="success-mouth" d="M79 103 C84 111 96 111 101 103"/>
+                <path class="permission-mouth" d="M84 106 C87 104 91 104 94 106"/>
                 <path class="idle-mouth" d="M82 106 C87 104 93 104 98 106"/>
                 <circle class="cheek left-cheek" cx="57" cy="110" r="8"/>
                 <circle class="cheek right-cheek" cx="123" cy="110" r="8"/>
@@ -78,8 +83,15 @@
             </g>
           </svg>
         </div>
-
+        <button class="resize-handle" type="button" title="Drag to resize" aria-label="Drag to resize">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 17L17 7"/>
+            <path d="M13 7h4v4"/>
+            <path d="M7 13v4h4"/>
+          </svg>
+        </button>
         <div class="controls">
+          <button type="button" data-demo="ready" title="Preview ready state">Ready</button>
           <button type="button" data-demo="permission_prompt" title="Preview permission state">Permission</button>
           <button type="button" data-demo="idle_prompt" title="Preview idle state">Idle</button>
           <button type="button" data-demo="auth_success" title="Preview success state">Success</button>

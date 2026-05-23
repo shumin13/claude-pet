@@ -1,5 +1,13 @@
 @import "desktop.css";
 
+html[data-mode="desktop"] .controls,
+html[data-mode="preview"] .utility-controls,
+html[data-mode="preview"] .collapsed-badge,
+html[data-mode="preview"] .resize-handle,
+html[data-mode="preview"] .project-tray {
+  display: none;
+}
+
 .controls {
   position: absolute;
   left: 50%;

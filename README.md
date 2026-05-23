@@ -68,7 +68,7 @@ Claude Pet has three small runtime pieces:
 | --- | --- | --- |
 | Event server | `server.js`, `lib/` | Serves the UI, accepts local hook POSTs, streams events to the overlay with SSE, and filters noisy notifications. |
 | Native overlay | `macos/RobotPetOverlay.swift` | Creates the transparent always-on-top macOS window, hosts the WebKit view, supports native dragging, and cleans up PID files on close. |
-| Web UI | `public/desktop.html`, `public/desktop.css`, `public/app.js` | Renders the robot, notification bubbles, project grouping, collapsed badge, hover controls, and resize behavior. |
+| Web UI | `public/index.html`, `public/desktop.css`, `public/styles.css`, `public/app.js` | Renders the robot, notification bubbles, project grouping, collapsed badge, hover controls, preview controls, and resize behavior. |
 
 The lifecycle scripts keep the overlay singleton across multiple Claude Code sessions:
 
@@ -185,7 +185,7 @@ Interaction behavior:
 The desktop UI can be opened directly for development:
 
 ```text
-/path/to/claude-pet/public/desktop.html
+/path/to/claude-pet/public/index.html
 ```
 
 Demo states can be rendered with query parameters when served through the local server:
