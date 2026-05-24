@@ -13,9 +13,9 @@ The implementation is intentionally small:
 
 ## Animated Demo
 
-![Claude Pet demo showing ready, permission, idle, job done, one notification, multiple notifications, and collapsed states](docs/assets/screenshots/claude-pet-demo.gif)
+![Claude Pet demo showing ready, permission, idle, job done, multiple notifications, and collapsed states](https://raw.githubusercontent.com/shumin13/claude-pet/master/docs/assets/demo.gif)
 
-The animated demo cycles through ready, permission, idle, job done, one notification, multiple project notifications, and collapsed notification mode.
+The animated demo cycles through ready, permission, idle, job done, multiple project notifications, and collapsed notification mode.
 
 Static reference images are available in `docs/assets/screenshots/`.
 
