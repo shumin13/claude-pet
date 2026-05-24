@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 
-import { access, mkdir, rm, stat, writeFile } from "node:fs/promises";
-import { constants } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
-import { join } from "node:path";
 import { recordSession } from "../lib/session-labels.js";
 import { withFileLock } from "../lib/lock.js";
+import { ensureOverlayBinary } from "../lib/overlay-binary.js";
 import { isAlive, readPid, readStdinJson, removeFile } from "../lib/runtime.js";
 import {
   lifecycleLockDir,
@@ -15,19 +14,8 @@ import {
   overlayPath,
   overlayPidFile,
   root,
-  serverPidFile,
-  swiftModuleCacheDir,
-  swiftSource
+  serverPidFile
 } from "../lib/config.js";
-
-async function executable(path) {
-  try {
-    await access(path, constants.X_OK);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 function spawnDetached(command, args, logName) {
   const child = spawn(command, args, {
@@ -51,24 +39,6 @@ async function processIsAlive(pidFile) {
   return false;
 }
 
-function run(command, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
-      cwd: root,
-      stdio: "ignore",
-      env: {
-        ...process.env,
-        CLANG_MODULE_CACHE_PATH: swiftModuleCacheDir
-      }
-    });
-    child.on("error", reject);
-    child.on("exit", code => {
-      if (code === 0) resolve();
-      else reject(new Error(`${command} exited with ${code}`));
-    });
-  });
-}
-
 async function healthCheck() {
   try {
     const response = await fetch(healthUrl);
@@ -76,12 +46,6 @@ async function healthCheck() {
   } catch {
     return false;
   }
-}
-
-async function needsBuild() {
-  if (!(await executable(overlayPath))) return true;
-  const [sourceStat, overlayStat] = await Promise.all([stat(swiftSource), stat(overlayPath)]);
-  return sourceStat.mtimeMs > overlayStat.mtimeMs;
 }
 
 async function main() {
@@ -96,19 +60,7 @@ async function main() {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    if (await needsBuild()) {
-      await rm(swiftModuleCacheDir, { recursive: true, force: true });
-      await mkdir(swiftModuleCacheDir, { recursive: true });
-      await run("swiftc", [
-        "macos/RobotPetOverlay.swift",
-        "-framework",
-        "Cocoa",
-        "-framework",
-        "WebKit",
-        "-o",
-        overlayPath
-      ]);
-    }
+    await ensureOverlayBinary({ quiet: true });
 
     if (!(await processIsAlive(overlayPidFile))) {
       const overlayProcess = spawnDetached(overlayPath, [], "overlay.log");

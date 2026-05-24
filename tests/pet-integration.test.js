@@ -3,13 +3,17 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { mkdir, readFile, stat } from "node:fs/promises";
-import { pruneStaleSessions, sessionKey } from "../lib/session-labels.js";
+import { hasSessionIdentity, pruneStaleSessions, recordSession, sessionKey } from "../lib/session-labels.js";
 
 const port = "38421";
+const buildDir = new URL("../.build", import.meta.url).pathname;
+const moduleCacheDir = new URL("../.build/module-cache", import.meta.url).pathname;
+const overlayPath = new URL("../.build/robot-pet-overlay", import.meta.url).pathname;
 const env = {
   ...process.env,
   PORT: port,
-  CLAUDE_PET_PORT: port
+  CLAUDE_PET_PORT: port,
+  CLAUDE_PET_BUILD_DIR: buildDir
 };
 
 function spawnNode(args, options = {}) {
@@ -90,8 +94,7 @@ async function assertStaticPreviewUsesRelativeAssets() {
 }
 
 async function assertDesktopBuildExists() {
-  const output = new URL("../.build/robot-pet-overlay", import.meta.url);
-  const details = await stat(output);
+  const details = await stat(overlayPath);
   assert.equal(details.isFile(), true);
   assert.equal((details.mode & 0o111) !== 0, true);
 }
@@ -116,10 +119,17 @@ function assertSessionFallbackKeysAreStable() {
   assert.equal(sessionKey({ transcript_path: "/tmp/demo.jsonl" }), "transcript:/tmp/demo.jsonl");
   assert.equal(sessionKey({ cwd: "/tmp/project-a" }), "cwd:/tmp/project-a");
   assert.equal(sessionKey({}), "fallback:claude-session");
+  assert.equal(hasSessionIdentity({}), false);
+  assert.equal(hasSessionIdentity({ cwd: "/tmp/project-a" }), true);
+}
+
+async function assertEmptyLaunchDoesNotRecordSession() {
+  const recorded = await recordSession({});
+  assert.equal(recorded, undefined);
 }
 
 async function buildDesktopOverlay() {
-  await mkdir(new URL("../.build/module-cache", import.meta.url), { recursive: true });
+  await mkdir(moduleCacheDir, { recursive: true });
   const child = spawn("swiftc", [
     "macos/RobotPetOverlay.swift",
     "-framework",
@@ -127,12 +137,12 @@ async function buildDesktopOverlay() {
     "-framework",
     "WebKit",
     "-o",
-    ".build/robot-pet-overlay"
+    overlayPath
   ], {
     cwd: new URL("..", import.meta.url).pathname,
     env: {
       ...env,
-      CLANG_MODULE_CACHE_PATH: ".build/module-cache"
+      CLANG_MODULE_CACHE_PATH: moduleCacheDir
     },
     stdio: ["ignore", "ignore", "pipe"]
   });
@@ -148,14 +158,19 @@ server.stderr.on("data", chunk => {
 try {
   await runNodeCheck("server.js");
   await runNodeCheck("public/app.js");
+  await runNodeCheck("lib/overlay-binary.js");
   await runNodeCheck("hooks/claude-pet-notify.js");
   await runNodeCheck("hooks/claude-pet-clear.js");
   await runNodeCheck("hooks/claude-pet-stop.js");
+  await runNodeCheck("bin/claude-pet.js");
+  await runNodeCheck("scripts/setup.js");
+  await runNodeCheck("scripts/install-claude-hook.js");
   await runNodeCheck("scripts/launch-desktop-if-needed.js");
   await runNodeCheck("scripts/close-desktop-if-last-session.js");
   await assertStaticPreviewUsesRelativeAssets();
   assertStaleSessionsPruned();
   assertSessionFallbackKeysAreStable();
+  await assertEmptyLaunchDoesNotRecordSession();
   await buildDesktopOverlay();
   await assertDesktopBuildExists();
 

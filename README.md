@@ -23,22 +23,39 @@ Static reference images are available in `docs/assets/screenshots/`.
 
 - macOS
 - Node.js 18 or newer
-- Xcode command line tools, for `swiftc`
 - Claude Code with hook support
 
-## Quick Start
+The npm package ships with a prebuilt macOS overlay. Xcode command line tools are only needed if you are building from source or the prebuilt overlay is missing.
 
-Build and launch the desktop overlay:
+## Install
 
-```sh
-npm run desktop
-```
-
-Run the event server only:
+Install globally with npm:
 
 ```sh
-npm start
+npm install -g @shumin13/claude-pet
 ```
+
+Then run setup:
+
+```sh
+claude-pet
+```
+
+That command checks requirements, installs the native macOS overlay, and installs the Claude Code hooks. After setup, open a new Claude Code session and the pet will launch automatically.
+
+Launch or preview it immediately:
+
+```sh
+claude-pet launch
+```
+
+Install or refresh only the Claude Code hooks:
+
+```sh
+claude-pet install-hooks
+```
+
+## Development
 
 Run tests:
 
@@ -46,10 +63,16 @@ Run tests:
 npm test
 ```
 
-Build the native overlay without launching it:
+Build the local native overlay used by this checkout:
 
 ```sh
-npm run build:desktop
+npm run build:overlay:local
+```
+
+Build the prebuilt overlay that ships in the npm package:
+
+```sh
+npm run build:overlay:package
 ```
 
 Create a source archive for sharing:
@@ -85,12 +108,12 @@ The lifecycle scripts keep the overlay singleton across multiple Claude Code ses
 Install or refresh the hooks automatically:
 
 ```sh
-node /path/to/claude-pet/scripts/install-claude-hook.js
+claude-pet install-hooks
 ```
 
 The installer updates `~/.claude/settings.json` and preserves a timestamped backup before writing.
 
-Manual hook configuration is also supported. Replace `/path/to/claude-pet` with the absolute path to this repository:
+Manual hook configuration is also supported. Replace `/path/to/claude-pet` with the absolute path to this package:
 
 ```json
 {
@@ -155,6 +178,7 @@ Manual hook configuration is also supported. Replace `/path/to/claude-pet` with 
 | --- | --- | --- |
 | `CLAUDE_PET_PORT` | `37421` | Local server port. |
 | `CLAUDE_PET_ENDPOINT` | `http://127.0.0.1:${CLAUDE_PET_PORT}/events` | Hook POST target. |
+| `CLAUDE_PET_BUILD_DIR` | `~/Library/Application Support/claude-pet` | User-writable runtime directory for the native overlay, PID files, module cache, and logs. |
 | `CLAUDE_PET_ROOT` | Repository root | Used by the native overlay for cleanup paths. |
 | `CLAUDE_PET_DESKTOP_URL` | `http://127.0.0.1:${CLAUDE_PET_PORT}/desktop.html` | Web UI URL loaded by the native overlay. |
 
@@ -221,7 +245,8 @@ Recommended checks before publishing:
 ```sh
 rg -n -i "(api[_-]?key|secret|token|password|passwd|authorization|bearer|private[_-]?key|BEGIN (RSA|OPENSSH|PRIVATE)|sk-[A-Za-z0-9]|xox[baprs]-|gh[pousr]_[A-Za-z0-9]|AIza[0-9A-Za-z_-]|AKIA[0-9A-Z]{16})" . -g '!node_modules/**' -g '!.build/**' -g '!*.zip'
 npm test
-npm run build:desktop
+npm run build:overlay:package
+npm pack --dry-run
 ```
 
 ## Project Layout
@@ -236,5 +261,5 @@ npm run build:desktop
 ├── tests/                Integration tests
 ├── docs/assets/          README screenshots and demo media
 ├── server.js             Local event server
-└── SPEC.md               Original implementation spec
+└── prebuilt/             Packaged macOS overlay binary
 ```

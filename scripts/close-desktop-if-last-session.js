@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { mkdir } from "node:fs/promises";
-import { pruneStaleSessions, readSessions, sessionKey, sessionsFile, writeSessions } from "../lib/session-labels.js";
+import { hasSessionIdentity, pruneStaleSessions, readSessions, sessionKey, sessionsFile, writeSessions } from "../lib/session-labels.js";
 import { eventsUrl, lifecycleLockDir, logDir, overlayPidFile, serverPidFile } from "../lib/config.js";
 import { withFileLock } from "../lib/lock.js";
 import { isAlive, postJson, readPid, readStdinJson, removeFile } from "../lib/runtime.js";
@@ -45,7 +45,7 @@ async function main() {
   await mkdir(logDir, { recursive: true });
 
   await withFileLock(lifecycleLockDir, async () => {
-    const sessionId = sessionKey(event);
+    const sessionId = hasSessionIdentity(event) ? sessionKey(event) : undefined;
     const sessions = pruneStaleSessions(await readSessions());
     if (sessionId) delete sessions[sessionId];
 
