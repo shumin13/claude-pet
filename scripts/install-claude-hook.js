@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 import { root } from "../lib/config.js";
@@ -55,13 +55,15 @@ async function main() {
   ensureHook(settings, "SessionEnd", sessionEndCommand);
 
   await mkdir(dirname(settingsPath), { recursive: true });
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   try {
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    await rename(settingsPath, `${settingsPath}.before-claude-pet-${stamp}`);
+    await copyFile(settingsPath, `${settingsPath}.before-claude-pet-${stamp}`);
   } catch (error) {
     if (error?.code !== "ENOENT") throw error;
   }
-  await writeFile(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
+  const tempPath = `${settingsPath}.claude-pet-${stamp}.tmp`;
+  await writeFile(tempPath, `${JSON.stringify(settings, null, 2)}\n`);
+  await rename(tempPath, settingsPath);
   console.log(`Installed Claude Code hooks in ${settingsPath}`);
   console.log(`  Notification: ${notifyCommand}`);
   console.log(`  PostToolUse:  ${clearCommand}`);

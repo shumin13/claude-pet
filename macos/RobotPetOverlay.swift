@@ -71,7 +71,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             dragStartMouse = nil
             dragStartWindow = nil
         case "close":
-            if let projectRoot = ProcessInfo.processInfo.environment["CLAUDE_PET_ROOT"] {
+            let env = ProcessInfo.processInfo.environment
+            if let buildDir = env["CLAUDE_PET_BUILD_DIR"] {
+                let pidPath = URL(fileURLWithPath: buildDir)
+                    .appendingPathComponent("robot-pet-overlay.pid")
+                try? FileManager.default.removeItem(at: pidPath)
+            }
+            if let projectRoot = env["CLAUDE_PET_ROOT"] {
                 let pidPath = URL(fileURLWithPath: projectRoot)
                     .appendingPathComponent(".build")
                     .appendingPathComponent("robot-pet-overlay.pid")

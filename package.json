@@ -3,12 +3,16 @@
   "version": "0.1.0",
   "type": "module",
   "description": "A lightweight macOS desktop companion for Claude Code hook events.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shumin13/claude-pet.git"
+  },
+  "homepage": "https://github.com/shumin13/claude-pet#readme",
   "bin": {
     "claude-pet": "bin/claude-pet.js"
   },
   "files": [
     "bin",
-    "docs",
     "hooks",
     "lib",
     "macos",
@@ -24,7 +28,7 @@
     "hook": "node hooks/claude-pet-notify.js",
     "install:hooks": "node scripts/install-claude-hook.js",
     "build:overlay:local": "rm -rf .build/module-cache && mkdir -p .build/module-cache && CLANG_MODULE_CACHE_PATH=.build/module-cache swiftc macos/RobotPetOverlay.swift -framework Cocoa -framework WebKit -o .build/robot-pet-overlay",
-    "build:overlay:package": "mkdir -p prebuilt/macos .build/module-cache && CLANG_MODULE_CACHE_PATH=.build/module-cache swiftc macos/RobotPetOverlay.swift -framework Cocoa -framework WebKit -o prebuilt/macos/robot-pet-overlay",
+    "build:overlay:package": "rm -rf .build/module-cache && mkdir -p prebuilt/macos .build/module-cache && CLANG_MODULE_CACHE_PATH=.build/module-cache swiftc macos/RobotPetOverlay.swift -framework Cocoa -framework WebKit -o prebuilt/macos/robot-pet-overlay && rm -rf .build/module-cache",
     "launch": "scripts/run-desktop.sh",
     "test": "node tests/pet-integration.test.js",
     "package:zip": "mkdir -p .build && zip -qr .build/claude-pet-source.zip .gitignore README.md package.json server.js bin lib hooks scripts public docs tests macos prebuilt"

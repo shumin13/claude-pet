@@ -41,7 +41,15 @@ Then run setup:
 claude-pet
 ```
 
-That command checks requirements, installs the native macOS overlay, and installs the Claude Code hooks. After setup, open a new Claude Code session and the pet will launch automatically.
+That command asks where to install Claude Pet's app files, checks requirements, installs the native macOS overlay, and installs the Claude Code hooks. The default app location is `~/Library/Application Support/claude-pet/app`, which keeps hook paths stable even if your global npm directory changes. After setup, open a new Claude Code session and the pet will launch automatically.
+
+You can also pass the app location explicitly:
+
+```sh
+claude-pet --app-dir "$HOME/Applications/claude-pet"
+```
+
+Choose a dedicated Claude Pet folder. Setup refuses to copy app files into common directories like your home, Documents, Downloads, or Applications folder directly.
 
 Launch or preview it immediately:
 
@@ -178,6 +186,7 @@ Manual hook configuration is also supported. Replace `/path/to/claude-pet` with 
 | --- | --- | --- |
 | `CLAUDE_PET_PORT` | `37421` | Local server port. |
 | `CLAUDE_PET_ENDPOINT` | `http://127.0.0.1:${CLAUDE_PET_PORT}/events` | Hook POST target. |
+| `CLAUDE_PET_APP_DIR` | `~/Library/Application Support/claude-pet/app` | Setup destination for stable app files and hook script paths. |
 | `CLAUDE_PET_BUILD_DIR` | `~/Library/Application Support/claude-pet` | User-writable runtime directory for the native overlay, PID files, module cache, and logs. |
 | `CLAUDE_PET_ROOT` | Repository root | Used by the native overlay for cleanup paths. |
 | `CLAUDE_PET_DESKTOP_URL` | `http://127.0.0.1:${CLAUDE_PET_PORT}/desktop.html` | Web UI URL loaded by the native overlay. |

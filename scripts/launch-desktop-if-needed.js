@@ -14,7 +14,8 @@ import {
   overlayPath,
   overlayPidFile,
   root,
-  serverPidFile
+  serverPidFile,
+  buildDir
 } from "../lib/config.js";
 
 function spawnDetached(command, args, logName) {
@@ -25,6 +26,7 @@ function spawnDetached(command, args, logName) {
     env: {
       ...process.env,
       CLAUDE_PET_ROOT: root,
+      CLAUDE_PET_BUILD_DIR: buildDir,
       CLAUDE_PET_DESKTOP_URL: desktopUrl
     }
   });
