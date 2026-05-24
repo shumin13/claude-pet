@@ -13,9 +13,9 @@ The implementation is intentionally small:
 
 ## Animated Demo
 
-![Claude Pet demo showing ready, permission, idle, job done, multiple notifications, and collapsed states](https://raw.githubusercontent.com/shumin13/claude-pet/master/docs/assets/demo.gif)
+<img src="https://raw.githubusercontent.com/shumin13/claude-pet/master/docs/assets/demo.gif" alt="Claude Pet demo showing ready, permission, idle, job done, one waiting notification, and multiple notifications" width="300">
 
-The animated demo cycles through ready, permission, idle, job done, multiple project notifications, and collapsed notification mode.
+The animated demo cycles through ready, permission, idle, job done, one waiting notification, and multiple project notifications.
 
 Static reference images are available in `docs/assets/screenshots/`.
 
@@ -95,21 +95,21 @@ npm run package:zip
 
 Claude Pet has three small runtime pieces:
 
-| Layer | Files | Responsibility |
-| --- | --- | --- |
-| Event server | `server.js`, `lib/` | Serves the UI, accepts local hook POSTs, streams events to the overlay with SSE, and filters noisy notifications. |
-| Native overlay | `macos/RobotPetOverlay.swift` | Creates the transparent always-on-top macOS window, hosts the WebKit view, supports native dragging, and cleans up PID files on close. |
-| Web UI | `public/index.html`, `public/desktop.css`, `public/styles.css`, `public/app.js` | Renders the robot, notification bubbles, project grouping, collapsed badge, hover controls, preview controls, and resize behavior. |
+| Layer          | Files                                                                           | Responsibility                                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Event server   | `server.js`, `lib/`                                                             | Serves the UI, accepts local hook POSTs, streams events to the overlay with SSE, and filters noisy notifications.                      |
+| Native overlay | `macos/RobotPetOverlay.swift`                                                   | Creates the transparent always-on-top macOS window, hosts the WebKit view, supports native dragging, and cleans up PID files on close. |
+| Web UI         | `public/index.html`, `public/desktop.css`, `public/styles.css`, `public/app.js` | Renders the robot, notification bubbles, project grouping, collapsed badge, hover controls, preview controls, and resize behavior.     |
 
 The lifecycle scripts keep the overlay singleton across multiple Claude Code sessions:
 
-| Hook | Script | Behavior |
-| --- | --- | --- |
-| `SessionStart` | `scripts/launch-desktop-if-needed.js` | Starts the server and overlay if needed, records the active session, and avoids duplicate windows with a file lock. |
-| `Notification` | `hooks/claude-pet-notify.js` | Sends permission, idle, and other notifications to the local server with a project/session label. |
-| `PostToolUse` | `hooks/claude-pet-clear.js` | Clears permission prompts once a tool completes. |
-| `Stop` | `hooks/claude-pet-stop.js` | Shows the job-done state for the current session. |
-| `SessionEnd` | `scripts/close-desktop-if-last-session.js` | Removes the active session and shuts down the overlay/server after the final session exits. |
+| Hook           | Script                                     | Behavior                                                                                                            |
+| -------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `SessionStart` | `scripts/launch-desktop-if-needed.js`      | Starts the server and overlay if needed, records the active session, and avoids duplicate windows with a file lock. |
+| `Notification` | `hooks/claude-pet-notify.js`               | Sends permission, idle, and other notifications to the local server with a project/session label.                   |
+| `PostToolUse`  | `hooks/claude-pet-clear.js`                | Clears permission prompts once a tool completes.                                                                    |
+| `Stop`         | `hooks/claude-pet-stop.js`                 | Shows the job-done state for the current session.                                                                   |
+| `SessionEnd`   | `scripts/close-desktop-if-last-session.js` | Removes the active session and shuts down the overlay/server after the final session exits.                         |
 
 ## Claude Code Hook Install
 
@@ -182,14 +182,14 @@ Manual hook configuration is also supported. Replace `/path/to/claude-pet` with 
 
 ## Runtime Configuration
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `CLAUDE_PET_PORT` | `37421` | Local server port. |
-| `CLAUDE_PET_ENDPOINT` | `http://127.0.0.1:${CLAUDE_PET_PORT}/events` | Hook POST target. |
-| `CLAUDE_PET_APP_DIR` | `~/Library/Application Support/claude-pet/app` | Setup destination for stable app files and hook script paths. |
-| `CLAUDE_PET_BUILD_DIR` | `~/Library/Application Support/claude-pet` | User-writable runtime directory for the native overlay, PID files, module cache, and logs. |
-| `CLAUDE_PET_ROOT` | Repository root | Used by the native overlay for cleanup paths. |
-| `CLAUDE_PET_DESKTOP_URL` | `http://127.0.0.1:${CLAUDE_PET_PORT}/desktop.html` | Web UI URL loaded by the native overlay. |
+| Variable                 | Default                                            | Purpose                                                                                    |
+| ------------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `CLAUDE_PET_PORT`        | `37421`                                            | Local server port.                                                                         |
+| `CLAUDE_PET_ENDPOINT`    | `http://127.0.0.1:${CLAUDE_PET_PORT}/events`       | Hook POST target.                                                                          |
+| `CLAUDE_PET_APP_DIR`     | `~/Library/Application Support/claude-pet/app`     | Setup destination for stable app files and hook script paths.                              |
+| `CLAUDE_PET_BUILD_DIR`   | `~/Library/Application Support/claude-pet`         | User-writable runtime directory for the native overlay, PID files, module cache, and logs. |
+| `CLAUDE_PET_ROOT`        | Repository root                                    | Used by the native overlay for cleanup paths.                                              |
+| `CLAUDE_PET_DESKTOP_URL` | `http://127.0.0.1:${CLAUDE_PET_PORT}/desktop.html` | Web UI URL loaded by the native overlay.                                                   |
 
 The server binds to `127.0.0.1` only.
 
