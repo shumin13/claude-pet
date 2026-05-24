@@ -1,6 +1,6 @@
 {
   "name": "@shumin13/claude-pet",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "A lightweight macOS desktop companion for Claude Code hook events.",
   "repository": {
