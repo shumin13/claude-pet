@@ -129,16 +129,7 @@ body {
 }
 
 .collapsed-badge::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: calc(-7px * var(--pet-scale));
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: calc(7px * var(--pet-scale)) solid transparent;
-  border-right: calc(7px * var(--pet-scale)) solid transparent;
-  border-top: calc(7px * var(--pet-scale)) solid rgba(23, 27, 27, 0.92);
+  content: none;
 }
 
 .pet-shell[data-collapsed="true"] .collapsed-badge {
@@ -314,16 +305,14 @@ body {
 .speech::after {
   content: "";
   position: absolute;
-  right: calc(50px * var(--pet-scale));
-  bottom: calc(-6px * var(--pet-scale));
-  width: calc(12px * var(--pet-scale));
-  height: calc(12px * var(--pet-scale));
-  border-right: 1px solid var(--bubble-border);
-  border-bottom: 1px solid var(--bubble-border);
-  background: var(--bubble);
-  transform: rotate(45deg);
-  transform-origin: center;
-  z-index: -1;
+  right: calc(48px * var(--pet-scale));
+  bottom: calc(-8px * var(--pet-scale));
+  width: 0;
+  height: 0;
+  border-left: calc(8px * var(--pet-scale)) solid transparent;
+  border-right: calc(8px * var(--pet-scale)) solid transparent;
+  border-top: calc(8px * var(--pet-scale)) solid var(--bubble);
+  filter: drop-shadow(0 1px 0 var(--bubble-border));
 }
 
 .eyebrow {
