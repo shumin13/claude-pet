@@ -2,11 +2,10 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { port, root } from "./lib/config.js";
+import { eventType, shouldIgnoreEvent } from "./lib/events.js";
 
 const publicDir = join(root, "public");
 const clients = new Set();
-const genericBashPermission = "Claude needs your permission to use Bash";
-
 const types = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -51,7 +50,7 @@ function readyEvent(message = "") {
 }
 
 function normalizeEvent(incoming = {}) {
-  const type = incoming.notification_type || incoming.type || "notification";
+  const type = eventType(incoming);
   return {
     type,
     title: incoming.title || "Claude Code",
@@ -59,11 +58,6 @@ function normalizeEvent(incoming = {}) {
     replay: incoming.replay !== false,
     sessionLabel: incoming.sessionLabel || incoming.session_label
   };
-}
-
-function shouldIgnoreEvent(event) {
-  if (event.type === "auth_success") return true;
-  return event.type === "permission_prompt" && String(event.message || "").trim() === genericBashPermission;
 }
 
 async function readBody(req) {

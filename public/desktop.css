@@ -44,9 +44,9 @@ body {
 
 .utility-controls {
   position: absolute;
-  right: calc(8px * var(--pet-scale));
-  bottom: calc(100px * var(--pet-scale));
-  z-index: 12;
+  right: calc(2px * var(--pet-scale));
+  top: calc(12px * var(--pet-scale));
+  z-index: 20;
   display: flex;
   gap: calc(4px * var(--pet-scale));
   opacity: 0;
@@ -148,9 +148,9 @@ body {
 
 .resize-handle {
   position: absolute;
-  right: calc(30px * var(--pet-scale));
-  bottom: calc(18px * var(--pet-scale));
-  z-index: 5;
+  right: calc(18px * var(--pet-scale));
+  bottom: calc(12px * var(--pet-scale));
+  z-index: 15;
   width: calc(24px * var(--pet-scale));
   height: calc(24px * var(--pet-scale));
   display: grid;
@@ -183,6 +183,7 @@ body {
   transform-origin: center;
 }
 
+.stage:hover .resize-handle,
 .pet-shell:hover .resize-handle,
 .resize-handle:focus-visible,
 .pet-shell[data-resizing="true"] .resize-handle {

@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { mkdir, readFile, stat } from "node:fs/promises";
+import { eventType, shouldIgnoreEvent } from "../lib/events.js";
 import { hasSessionIdentity, pruneStaleSessions, recordSession, sessionKey } from "../lib/session-labels.js";
 
 const port = "38421";
@@ -123,6 +124,12 @@ function assertSessionFallbackKeysAreStable() {
   assert.equal(hasSessionIdentity({ cwd: "/tmp/project-a" }), true);
 }
 
+function assertEventFiltersAreShared() {
+  assert.equal(eventType({ notification_type: "permission_prompt" }), "permission_prompt");
+  assert.equal(shouldIgnoreEvent({ notification_type: "auth_success" }), true);
+  assert.equal(shouldIgnoreEvent({ notification_type: "permission_prompt", message: "Claude needs your permission to use Bash" }), false);
+}
+
 async function assertEmptyLaunchDoesNotRecordSession() {
   const recorded = await recordSession({});
   assert.equal(recorded, undefined);
@@ -170,6 +177,7 @@ try {
   await assertStaticPreviewUsesRelativeAssets();
   assertStaleSessionsPruned();
   assertSessionFallbackKeysAreStable();
+  assertEventFiltersAreShared();
   await assertEmptyLaunchDoesNotRecordSession();
   await buildDesktopOverlay();
   await assertDesktopBuildExists();
@@ -194,7 +202,9 @@ try {
     message: "Claude needs your permission to use Bash"
   });
   current = await health();
-  assert.equal(current.lastEvent.type, "ready", "generic Bash startup permission should be ignored");
+  assert.equal(current.lastEvent.type, "permission_prompt", "generic Bash permission prompts should notify");
+  assert.equal(current.lastEvent.replay, false);
+  assert.match(current.lastEvent.message, /^\[alpha-project\] /);
 
   await runHook("hooks/claude-pet-notify.js", {
     notification_type: "permission_prompt",
