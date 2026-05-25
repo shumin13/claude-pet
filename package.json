@@ -29,6 +29,8 @@
     "install:hooks": "node scripts/install-claude-hook.js",
     "build:overlay:local": "rm -rf .build/module-cache && mkdir -p .build/module-cache && CLANG_MODULE_CACHE_PATH=.build/module-cache swiftc macos/RobotPetOverlay.swift -framework Cocoa -framework WebKit -o .build/robot-pet-overlay",
     "build:overlay:package": "rm -rf .build/module-cache && mkdir -p prebuilt/macos .build/module-cache && CLANG_MODULE_CACHE_PATH=.build/module-cache swiftc macos/RobotPetOverlay.swift -framework Cocoa -framework WebKit -o prebuilt/macos/robot-pet-overlay && rm -rf .build/module-cache",
+    "prepack": "npm run build:overlay:package",
+    "prepublishOnly": "npm test",
     "launch": "scripts/run-desktop.sh",
     "test": "node tests/pet-integration.test.js",
     "package:zip": "mkdir -p .build && zip -qr .build/claude-pet-source.zip .gitignore README.md package.json server.js bin lib hooks scripts public docs tests macos prebuilt"

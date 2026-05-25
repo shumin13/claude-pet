@@ -258,6 +258,13 @@ npm run build:overlay:package
 npm pack --dry-run
 ```
 
+Publishing is automated from GitHub tags and published GitHub Releases. Add an `NPM_TOKEN`
+repository secret with publish access, then create a version tag such as `v0.1.3`.
+The workflow runs on macOS, installs dependencies, verifies the tag matches
+`package.json`, runs npm's publish hooks, rebuilds the packaged Swift overlay,
+and publishes to npm. Local `npm pack` and `npm publish` also rebuild the
+packaged overlay automatically through the `prepack` script.
+
 ## Project Layout
 
 ```text
