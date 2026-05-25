@@ -107,6 +107,7 @@ The lifecycle scripts keep the overlay singleton across multiple Claude Code ses
 | -------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
 | `SessionStart` | `scripts/launch-desktop-if-needed.js`      | Starts the server and overlay if needed, records the active session, and avoids duplicate windows with a file lock. |
 | `Notification` | `hooks/claude-pet-notify.js`               | Sends permission, idle, and other notifications to the local server with a project/session label.                   |
+| `PermissionRequest` | `hooks/claude-pet-notify.js`         | Sends approval dialogs such as Bash permission requests to the local server as permission notifications.             |
 | `PostToolUse`  | `hooks/claude-pet-clear.js`                | Clears permission prompts once a tool completes.                                                                    |
 | `Stop`         | `hooks/claude-pet-stop.js`                 | Shows the job-done state for the current session.                                                                   |
 | `SessionEnd`   | `scripts/close-desktop-if-last-session.js` | Removes the active session and shuts down the overlay/server after the final session exits.                         |
@@ -120,6 +121,13 @@ claude-pet install-hooks
 ```
 
 The installer updates `~/.claude/settings.json` and preserves a timestamped backup before writing.
+
+Claude Code's hook events can change across versions. Claude Pet registers both
+`Notification` and `PermissionRequest` because some Claude Code versions report
+permission approval prompts as `permission_prompt` notifications, while newer
+versions may fire `PermissionRequest` when the approval dialog appears. If
+permission alerts stop appearing after a Claude Code update, run
+`claude-pet install-hooks` to refresh the installed hook entries.
 
 Manual hook configuration is also supported. Replace `/path/to/claude-pet` with the absolute path to this package:
 
@@ -137,6 +145,16 @@ Manual hook configuration is also supported. Replace `/path/to/claude-pet` with 
       }
     ],
     "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /path/to/claude-pet/hooks/claude-pet-notify.js"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
       {
         "hooks": [
           {

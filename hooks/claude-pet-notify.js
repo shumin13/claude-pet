@@ -2,7 +2,7 @@
 
 import { labelForEvent, withSessionPrefix } from "../lib/session-labels.js";
 import { eventsUrl } from "../lib/config.js";
-import { shouldIgnoreEvent } from "../lib/events.js";
+import { eventType, notificationMessage, notificationTitle, shouldIgnoreEvent } from "../lib/events.js";
 import { postJson, readStdinJson } from "../lib/runtime.js";
 
 const endpoint = process.env.CLAUDE_PET_ENDPOINT || eventsUrl;
@@ -13,7 +13,9 @@ try {
     const label = await labelForEvent(event);
     const response = await postJson(endpoint, {
       ...event,
-      message: withSessionPrefix(event.message, label),
+      type: eventType(event),
+      title: notificationTitle(event),
+      message: withSessionPrefix(notificationMessage(event), label),
       replay: false
     });
 

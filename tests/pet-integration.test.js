@@ -2,8 +2,12 @@
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdir, readFile, stat } from "node:fs/promises";
-import { eventType, shouldIgnoreEvent } from "../lib/events.js";
+import { mkdir, mkdtemp, readFile, stat, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { appName, appVersion, isExpectedHealth } from "../lib/app-identity.js";
+import { root } from "../lib/config.js";
+import { eventType, notificationMessage, notificationTitle, shouldIgnoreEvent } from "../lib/events.js";
 import { hasSessionIdentity, pruneStaleSessions, recordSession, sessionKey } from "../lib/session-labels.js";
 
 const port = "38421";
@@ -87,6 +91,18 @@ async function runNodeCheck(path) {
   await waitForExit(child);
 }
 
+async function runScriptWithEnv(script, extraEnv) {
+  const child = spawn(process.execPath, [script], {
+    cwd: new URL("..", import.meta.url).pathname,
+    env: {
+      ...env,
+      ...extraEnv
+    },
+    stdio: ["ignore", "ignore", "pipe"]
+  });
+  await waitForExit(child);
+}
+
 async function assertStaticPreviewUsesRelativeAssets() {
   const page = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
   assert.match(page, /href="styles\.css"/);
@@ -126,6 +142,9 @@ function assertSessionFallbackKeysAreStable() {
 
 function assertEventFiltersAreShared() {
   assert.equal(eventType({ notification_type: "permission_prompt" }), "permission_prompt");
+  assert.equal(eventType({ hook_event_name: "PermissionRequest", tool_name: "Bash" }), "permission_prompt");
+  assert.equal(notificationTitle({ hook_event_name: "PermissionRequest" }), "Permission needed");
+  assert.equal(notificationMessage({ hook_event_name: "PermissionRequest", tool_name: "Bash", tool_input: { command: "npm test" } }), "Claude wants to use Bash: npm test");
   assert.equal(shouldIgnoreEvent({ notification_type: "auth_success" }), true);
   assert.equal(shouldIgnoreEvent({ notification_type: "permission_prompt", message: "Claude needs your permission to use Bash" }), false);
 }
@@ -133,6 +152,45 @@ function assertEventFiltersAreShared() {
 async function assertEmptyLaunchDoesNotRecordSession() {
   const recorded = await recordSession({});
   assert.equal(recorded, undefined);
+}
+
+async function assertInstallHooksPrunesStaleCommands() {
+  const home = await mkdtemp(join(tmpdir(), "claude-pet-home-"));
+  const settingsPath = join(home, ".claude", "settings.json");
+  await mkdir(join(home, ".claude"), { recursive: true });
+  await writeFile(settingsPath, `${JSON.stringify({
+    hooks: {
+      Notification: [{
+        hooks: [
+          { type: "command", command: "node \"/Users/s.huang.4/.Trash/claude-pet/hooks/claude-pet-notify.js\"" },
+          { type: "command", command: "echo keep-me" }
+        ]
+      }],
+      PermissionRequest: [{
+        hooks: [
+          { type: "command", command: "node \"/Users/s.huang.4/.Trash/claude-pet/hooks/claude-pet-notify.js\"" }
+        ]
+      }],
+      SessionStart: [{
+        hooks: [
+          { type: "command", command: "node \"/Users/s.huang.4/.Trash/claude-pet/scripts/launch-desktop-if-needed.js\"" }
+        ]
+      }]
+    }
+  }, null, 2)}\n`);
+
+  await runScriptWithEnv("scripts/install-claude-hook.js", { HOME: home });
+
+  const settings = JSON.parse(await readFile(settingsPath, "utf8"));
+  const commands = Object.values(settings.hooks)
+    .flatMap(entries => entries.flatMap(entry => entry.hooks || []))
+    .map(hook => hook.command);
+
+  assert.equal(commands.some(command => command.includes(".Trash/claude-pet")), false);
+  assert.equal(commands.includes("echo keep-me"), true);
+  assert.equal(commands.includes(`node ${JSON.stringify(join(root, "hooks", "claude-pet-notify.js"))}`), true);
+  assert.equal(commands.includes(`node ${JSON.stringify(join(root, "scripts", "launch-desktop-if-needed.js"))}`), true);
+  assert.equal(settings.hooks.PermissionRequest[0].hooks.some(hook => hook.command === `node ${JSON.stringify(join(root, "hooks", "claude-pet-notify.js"))}`), true);
 }
 
 async function buildDesktopOverlay() {
@@ -165,6 +223,7 @@ server.stderr.on("data", chunk => {
 try {
   await runNodeCheck("server.js");
   await runNodeCheck("public/app.js");
+  await runNodeCheck("lib/app-identity.js");
   await runNodeCheck("lib/overlay-binary.js");
   await runNodeCheck("hooks/claude-pet-notify.js");
   await runNodeCheck("hooks/claude-pet-clear.js");
@@ -179,6 +238,7 @@ try {
   assertSessionFallbackKeysAreStable();
   assertEventFiltersAreShared();
   await assertEmptyLaunchDoesNotRecordSession();
+  await assertInstallHooksPrunesStaleCommands();
   await buildDesktopOverlay();
   await assertDesktopBuildExists();
 
@@ -186,6 +246,12 @@ try {
 
   let current = await health();
   assert.equal(current.lastEvent.type, "ready");
+  assert.equal(current.app, appName);
+  assert.equal(current.version, await appVersion());
+  assert.equal(current.root, root);
+  assert.equal(current.desktopPathOk, true);
+  assert.equal(isExpectedHealth(current), true);
+  assert.equal(isExpectedHealth({ ok: true, app: appName, root: "/tmp/claude-pet", desktopPathOk: true }), false);
 
   await runHook("hooks/claude-pet-notify.js", {
     notification_type: "auth_success",
@@ -216,6 +282,20 @@ try {
   assert.equal(current.lastEvent.type, "permission_prompt");
   assert.equal(current.lastEvent.replay, false);
   assert.match(current.lastEvent.message, /^\[alpha-project\] /);
+
+  await runHook("hooks/claude-pet-notify.js", {
+    hook_event_name: "PermissionRequest",
+    cwd: "/tmp/alpha-project",
+    tool_name: "Bash",
+    tool_input: {
+      command: "npm test",
+      description: "Run the test suite"
+    }
+  });
+  current = await health();
+  assert.equal(current.lastEvent.type, "permission_prompt");
+  assert.equal(current.lastEvent.title, "Permission needed");
+  assert.match(current.lastEvent.message, /^\[alpha-project\] Claude wants to use Bash: npm test/);
 
   const replay = await readFirstSseEvent();
   assert.equal(replay.type, "ready", "new clients should not replay stale permission events");

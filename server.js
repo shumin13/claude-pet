@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
+import { healthIdentity } from "./lib/app-identity.js";
 import { port, root } from "./lib/config.js";
 import { eventType, shouldIgnoreEvent } from "./lib/events.js";
 
@@ -102,7 +103,7 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === "GET" && url.pathname === "/health") {
-      json(res, 200, { ok: true, clients: clients.size, lastEvent });
+      json(res, 200, await healthIdentity({ clients: clients.size, lastEvent }));
       return;
     }
 

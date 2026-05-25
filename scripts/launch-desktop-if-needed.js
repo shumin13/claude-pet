@@ -2,6 +2,7 @@
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
+import { isExpectedHealth } from "../lib/app-identity.js";
 import { recordSession } from "../lib/session-labels.js";
 import { withFileLock } from "../lib/lock.js";
 import { ensureOverlayBinary } from "../lib/overlay-binary.js";
@@ -13,6 +14,7 @@ import {
   logDir,
   overlayPath,
   overlayPidFile,
+  port,
   root,
   serverPidFile,
   buildDir
@@ -44,10 +46,36 @@ async function processIsAlive(pidFile) {
 async function healthCheck() {
   try {
     const response = await fetch(healthUrl);
-    return response.ok;
+    if (!response.ok) {
+      return { ok: false, reachable: true, reason: `/health returned ${response.status}` };
+    }
+
+    let health;
+    try {
+      health = await response.json();
+    } catch {
+      return { ok: false, reachable: true, reason: "/health returned invalid JSON" };
+    }
+
+    if (!isExpectedHealth(health)) {
+      return { ok: false, reachable: true, reason: "health identity did not match this install", health };
+    }
+
+    const desktop = await fetch(desktopUrl);
+    const contentType = desktop.headers.get("content-type") || "";
+    if (!desktop.ok || !contentType.includes("text/html")) {
+      return { ok: false, reachable: true, reason: `/desktop.html returned ${desktop.status} ${contentType}` };
+    }
+
+    return { ok: true };
   } catch {
-    return false;
+    return { ok: false, reachable: false };
   }
+}
+
+function incompatibleServerError(check) {
+  const details = check.reason ? ` ${check.reason}.` : "";
+  return `Port ${port} is occupied by an incompatible claude-pet server.${details} Stop the stale server, then launch again.`;
 }
 
 async function main() {
@@ -56,10 +84,20 @@ async function main() {
   await withFileLock(lifecycleLockDir, async () => {
     await recordSession(event);
 
-    if (!(await healthCheck())) {
+    const existingServer = await healthCheck();
+    if (!existingServer.ok && existingServer.reachable) {
+      throw new Error(incompatibleServerError(existingServer));
+    }
+
+    if (!existingServer.ok) {
       const serverProcess = spawnDetached(process.execPath, ["server.js"], "server.log");
       await writeFile(serverPidFile, `${serverProcess.pid}\n`);
       await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const newServer = await healthCheck();
+      if (!newServer.ok) {
+        throw new Error(newServer.reachable ? incompatibleServerError(newServer) : "Claude Pet server did not become healthy.");
+      }
     }
 
     await ensureOverlayBinary({ quiet: true });
