@@ -50,8 +50,13 @@ jobs:
             echo "published=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Publish to npm
+      # TODO: Re-enable after NPM_TOKEN publishing auth is configured.
+      # - name: Publish to npm
+      #   if: steps.npm-version.outputs.published != 'true'
+      #   run: npm publish --access public
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Skip npm publish
         if: steps.npm-version.outputs.published != 'true'
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: echo "npm publish is temporarily disabled; publish manually after verifying npm auth."
