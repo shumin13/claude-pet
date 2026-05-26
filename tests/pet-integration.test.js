@@ -305,18 +305,18 @@ async function assertInstallHooksPrunesStaleCommands() {
     hooks: {
       Notification: [{
         hooks: [
-          { type: "command", command: "node \"/Users/s.huang.4/.Trash/claude-pet/hooks/claude-pet-notify.js\"" },
+          { type: "command", command: "node \"/tmp/.Trash/claude-pet/hooks/claude-pet-notify.js\"" },
           { type: "command", command: "echo keep-me" }
         ]
       }],
       PermissionRequest: [{
         hooks: [
-          { type: "command", command: "node \"/Users/s.huang.4/.Trash/claude-pet/hooks/claude-pet-notify.js\"" }
+          { type: "command", command: "node \"/tmp/.Trash/claude-pet/hooks/claude-pet-notify.js\"" }
         ]
       }],
       SessionStart: [{
         hooks: [
-          { type: "command", command: "node \"/Users/s.huang.4/.Trash/claude-pet/scripts/launch-desktop-if-needed.js\"" }
+          { type: "command", command: "node \"/tmp/.Trash/claude-pet/scripts/launch-desktop-if-needed.js\"" }
         ]
       }]
     }
