@@ -9,16 +9,18 @@
   <body>
     <main class="stage" aria-live="polite">
       <section class="pet-shell" data-state="ready">
-        <div class="utility-controls" aria-label="Pet controls">
-          <button class="collapse-button" type="button" title="Collapse notification" aria-label="Collapse notification">−</button>
-          <button class="close-button" type="button" title="Close pet" aria-label="Close pet">×</button>
+        <div class="bubble-zone">
+          <div class="utility-controls" aria-label="Pet controls">
+            <button class="collapse-button" type="button" title="Collapse notification" aria-label="Collapse notification">−</button>
+            <button class="close-button" type="button" title="Close pet" aria-label="Close pet">×</button>
+          </div>
+          <div class="speech" id="speech">
+            <p class="eyebrow" id="eventType">Ready</p>
+            <h1 id="eventTitle">Claude Pet is awake</h1>
+            <p id="eventMessage">Waiting for Claude Code notifications.</p>
+          </div>
         </div>
         <button class="collapsed-badge" id="collapsedBadge" type="button" aria-label="Show notifications">0</button>
-        <div class="speech" id="speech">
-          <p class="eyebrow" id="eventType">Ready</p>
-          <h1 id="eventTitle">Claude Pet is awake</h1>
-          <p id="eventMessage">Waiting for Claude Code notifications.</p>
-        </div>
         <div class="project-tray" id="projectTray" aria-label="Queued projects"></div>
         <div class="pet-wrap" aria-label="Cute robot notification pet">
           <svg class="pet" viewBox="0 0 180 180" role="img" aria-labelledby="petTitle">

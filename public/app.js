@@ -28,6 +28,8 @@ let currentEvent = null;
 let queue = [];
 let collapsed = false;
 let currentScale = defaultScale;
+let hitRegionFrame = 0;
+let resizingPet = false;
 
 const copy = {
   permission_prompt: {
@@ -158,6 +160,7 @@ function render(event = currentEvent) {
 
   speech?.classList.remove("flash");
   requestAnimationFrame(() => speech?.classList.add("flash"));
+  scheduleDesktopHitRegionSync();
 }
 
 function renderProjectTray(groups = projectGroups()) {
@@ -361,6 +364,7 @@ function setScale(scale, persist = true) {
   currentScale = clampScale(scale);
   document.documentElement.style.setProperty("--pet-scale", String(currentScale));
   shell.dataset.size = sizeName(currentScale);
+  scheduleDesktopHitRegionSync();
   try {
     if (persist) localStorage.setItem("claude-pet-scale", String(currentScale));
   } catch {
@@ -422,6 +426,52 @@ if (new URLSearchParams(window.location.search).get("demoMotion") === "true") {
 
 connectStream();
 
+function scheduleDesktopHitRegionSync() {
+  const bridge = window.webkit?.messageHandlers?.petDrag;
+  if (!bridge || document.documentElement.dataset.mode !== "desktop") return;
+  if (hitRegionFrame) cancelAnimationFrame(hitRegionFrame);
+  hitRegionFrame = requestAnimationFrame(() => {
+    hitRegionFrame = 0;
+    bridge.postMessage({
+      type: "hitRegions",
+      viewportHeight: window.innerHeight,
+      regions: visibleHitRegions()
+    });
+  });
+}
+
+function visibleHitRegions() {
+  const elements = [
+    document.querySelector(".pet-wrap"),
+    speech,
+    collapsedBadge,
+    document.querySelector(".utility-controls"),
+    resizeHandle,
+    ...document.querySelectorAll(".project-bubble")
+  ];
+
+  return elements
+    .filter(Boolean)
+    .filter(element => {
+      if (element.hidden) return false;
+      const style = getComputedStyle(element);
+      if (style.display === "none" || style.visibility === "hidden") return false;
+      if (!element.matches(".pet-wrap") && style.pointerEvents === "none") return false;
+
+      const rect = element.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    })
+    .map(element => {
+      const rect = element.getBoundingClientRect();
+      return {
+        x: rect.left,
+        y: rect.top,
+        width: rect.width,
+        height: rect.height
+      };
+    });
+}
+
 function connectResize() {
   let resizing = false;
   let resizeStartX = 0;
@@ -441,6 +491,8 @@ function connectResize() {
 
   resizeHandle?.addEventListener("pointerdown", event => {
     resizing = true;
+    resizingPet = true;
+    scheduleDesktopHitRegionSync();
     resizeStartX = event.clientX;
     resizeStartY = event.clientY;
     resizeStartScale = currentScale;
@@ -466,9 +518,11 @@ function connectResize() {
   const endResize = event => {
     if (!resizing) return;
     resizing = false;
+    resizingPet = false;
     shell.dataset.resizing = "false";
     resizeHandle.releasePointerCapture?.(event.pointerId);
     setScale(currentScale);
+    scheduleDesktopHitRegionSync();
     event.stopPropagation();
   };
 
@@ -514,3 +568,9 @@ function connectDesktopDrag() {
 
 connectResize();
 connectDesktopDrag();
+document.addEventListener("pointermove", scheduleDesktopHitRegionSync);
+document.addEventListener("pointerover", scheduleDesktopHitRegionSync);
+document.addEventListener("pointerout", scheduleDesktopHitRegionSync);
+window.addEventListener("load", scheduleDesktopHitRegionSync);
+window.addEventListener("resize", scheduleDesktopHitRegionSync);
+scheduleDesktopHitRegionSync();

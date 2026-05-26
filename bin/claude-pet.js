@@ -13,6 +13,7 @@ const defaultAppDir = join(homedir(), "Library", "Application Support", "claude-
 const commands = new Map([
   ["setup", ["scripts/setup.js"]],
   ["launch", ["scripts/launch-desktop-if-needed.js"]],
+  ["demo", ["scripts/demo-notification.js"]],
   ["install-hooks", ["scripts/install-claude-hook.js"]],
   ["server", ["server.js"]]
 ]);
@@ -29,7 +30,8 @@ Usage:
   claude-pet               Set up hooks and install the overlay
   claude-pet setup         Set up hooks and install the overlay
   claude-pet --app-dir DIR Install stable app files in DIR during setup
-  claude-pet launch        Launch or preview the pet now
+  claude-pet launch        Launch the pet in ready state
+  claude-pet demo [STATE]  Launch the pet and preview a notification
   claude-pet install-hooks Install or refresh Claude Code hooks
   claude-pet server        Run the local event server
 

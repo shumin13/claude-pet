@@ -51,11 +51,19 @@ claude-pet --app-dir "$HOME/Applications/claude-pet"
 
 Choose a dedicated Claude Pet folder. Setup refuses to copy app files into common directories like your home, Documents, Downloads, or Applications folder directly.
 
-Launch or preview it immediately:
+Launch it in the ready state:
 
 ```sh
 claude-pet launch
 ```
+
+Preview a notification without waiting for a real Claude Code hook:
+
+```sh
+claude-pet demo permission
+```
+
+Demo states are `permission`, `idle`, `done`, `one`, and `multi`.
 
 Install or refresh only the Claude Code hooks:
 
@@ -230,6 +238,15 @@ Interaction behavior:
 - Hover to reveal minimize, close, and resize controls
 - Drag the lower-right resize handle for smooth manual resizing
 - Click the collapsed badge or pet to expand notifications
+- Empty transparent window space is click-through, so visible text or apps behind the pet remain clickable
+
+UI layout requirements covered by tests:
+
+- Minimize and close controls sit above the notification bubble when a bubble exists
+- In ready/collapsed/multiple-project states, minimize and close stay near the pet and do not overlap the resize handle
+- The resize handle appears only on hover, focus, or active resize
+- The resize handle aligns to the pet base and shares the same right edge as the close control
+- Resizing changes only the web UI scale and does not resize the native macOS window during drag
 
 ## Static Preview
 
@@ -249,6 +266,13 @@ http://127.0.0.1:37421/desktop.html?demo=done
 http://127.0.0.1:37421/desktop.html?demo=one
 http://127.0.0.1:37421/desktop.html?demo=multi
 http://127.0.0.1:37421/desktop.html?demo=multi&collapsed=true
+```
+
+For an end-to-end local preview that starts the overlay and sends a fake event
+through the same server path as Claude Code hooks, use:
+
+```sh
+claude-pet demo permission
 ```
 
 ## Privacy And Repository Safety

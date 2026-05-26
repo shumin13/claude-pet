@@ -7,10 +7,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private var webView: WKWebView!
     private var dragStartMouse: NSPoint?
     private var dragStartWindow: NSPoint?
+    private var hitRegions: [NSRect] = []
+    private var globalMouseMonitor: Any?
+    private var localMouseMonitor: Any?
+    private let defaultSize = NSSize(width: 420, height: 520)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        let size = NSSize(width: 390, height: 390)
+        let size = defaultSize
         let origin = NSPoint(
             x: screenFrame.maxX - size.width - 28,
             y: screenFrame.minY + 28
@@ -28,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         window.level = .statusBar
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         window.isMovableByWindowBackground = true
+        window.acceptsMouseMovedEvents = true
 
         let configuration = WKWebViewConfiguration()
         configuration.userContentController.add(self, name: "petDrag")
@@ -45,6 +50,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         if let url = URL(string: page) {
             webView.load(URLRequest(url: url))
         }
+
+        installMouseMonitors()
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -54,7 +61,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         else { return }
 
         switch type {
+        case "resizeWindow":
+            guard let width = numberValue(body["width"]),
+                  let height = numberValue(body["height"])
+            else { return }
+            resizeWindow(width: width, height: height)
+        case "hitRegions":
+            guard let regions = body["regions"] as? [[String: Any]] else { return }
+            updateHitRegions(regions, viewportHeight: numberValue(body["viewportHeight"]))
         case "start":
+            window.ignoresMouseEvents = false
             dragStartMouse = NSEvent.mouseLocation
             dragStartWindow = window.frame.origin
         case "move":
@@ -67,9 +83,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 y: startWindow.y + mouse.y - startMouse.y
             )
             window.setFrameOrigin(nextOrigin)
+            updateMousePassthrough()
         case "end":
             dragStartMouse = nil
             dragStartWindow = nil
+            updateMousePassthrough()
         case "close":
             let env = ProcessInfo.processInfo.environment
             if let buildDir = env["CLAUDE_PET_BUILD_DIR"] {
@@ -91,6 +109,81 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         default:
             break
         }
+    }
+
+    private func resizeWindow(width: Double, height: Double) {
+        let nextSize = NSSize(
+            width: max(defaultSize.width, ceil(width)),
+            height: max(defaultSize.height, ceil(height))
+        )
+        let currentFrame = window.frame
+        let nextOrigin = NSPoint(
+            x: currentFrame.maxX - nextSize.width,
+            y: currentFrame.minY
+        )
+        window.setFrame(NSRect(origin: nextOrigin, size: nextSize), display: true)
+        updateMousePassthrough()
+    }
+
+    private func updateHitRegions(_ regions: [[String: Any]], viewportHeight: Double?) {
+        let height = viewportHeight ?? Double(webView.bounds.height)
+        hitRegions = regions.compactMap { region in
+            guard let x = numberValue(region["x"]),
+                  let y = numberValue(region["y"]),
+                  let width = numberValue(region["width"]),
+                  let heightValue = numberValue(region["height"]),
+                  width > 0,
+                  heightValue > 0
+            else { return nil }
+
+            return NSRect(
+                x: x,
+                y: height - y - heightValue,
+                width: width,
+                height: heightValue
+            )
+        }
+        updateMousePassthrough()
+    }
+
+    private func numberValue(_ value: Any?) -> Double? {
+        if let double = value as? Double {
+            return double
+        }
+        if let number = value as? NSNumber {
+            return number.doubleValue
+        }
+        return nil
+    }
+
+    private func installMouseMonitors() {
+        globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged]) { [weak self] _ in
+            self?.updateMousePassthrough()
+        }
+        localMouseMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged]) { [weak self] event in
+            self?.updateMousePassthrough()
+            return event
+        }
+    }
+
+    private func updateMousePassthrough() {
+        guard window != nil else { return }
+        if dragStartMouse != nil {
+            window.ignoresMouseEvents = false
+            return
+        }
+
+        let screenPoint = NSEvent.mouseLocation
+        guard window.frame.contains(screenPoint) else {
+            window.ignoresMouseEvents = true
+            return
+        }
+
+        let windowPoint = NSPoint(
+            x: screenPoint.x - window.frame.minX,
+            y: screenPoint.y - window.frame.minY
+        )
+        window.ignoresMouseEvents = !hitRegions.contains { $0.contains(windowPoint) }
     }
 }
 

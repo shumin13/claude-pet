@@ -190,6 +190,7 @@ async function main() {
   console.log("Claude Pet is ready.");
   console.log("Open a new Claude Code session and the pet will launch automatically.");
   console.log("To launch it now, run: claude-pet launch");
+  console.log("To preview a notification, run: claude-pet demo permission");
 }
 
 main().catch(error => {

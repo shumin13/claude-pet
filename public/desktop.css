@@ -29,50 +29,86 @@ body {
   height: 100%;
   display: grid;
   place-items: end center;
-  padding: calc(8px * var(--pet-scale));
+  padding: calc(14px * var(--pet-scale));
 }
 
 .pet-shell {
   position: relative;
-  width: calc(214px * var(--pet-scale));
-  height: calc(250px * var(--pet-scale));
+  width: calc(222px * var(--pet-scale));
+  min-height: calc(258px * var(--pet-scale));
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.pet-shell[data-state="ready"] {
+  min-height: calc(166px * var(--pet-scale));
+}
+
+.bubble-zone {
+  width: calc(204px * var(--pet-scale));
   display: grid;
-  grid-template-rows: auto calc(126px * var(--pet-scale));
-  justify-items: center;
-  align-items: end;
+  justify-items: end;
+  row-gap: calc(4px * var(--pet-scale));
+  margin-bottom: calc(4px * var(--pet-scale));
+}
+
+.pet-shell[data-state="ready"] .bubble-zone,
+.pet-shell[data-collapsed="true"] .bubble-zone,
+.pet-shell[data-multi-project="true"] .bubble-zone {
+  width: 0;
+  height: 0;
+  margin: 0;
 }
 
 .utility-controls {
-  position: absolute;
-  right: calc(2px * var(--pet-scale));
-  top: calc(12px * var(--pet-scale));
+  position: relative;
   z-index: 20;
   display: flex;
-  gap: calc(4px * var(--pet-scale));
+  gap: calc(3px * var(--pet-scale));
+  padding: calc(3px * var(--pet-scale));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(18, 20, 18, 0.7);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(14px);
   opacity: 0;
-  transition: opacity 120ms ease;
+  pointer-events: none;
+  transform: translateY(calc(-2px * var(--pet-scale)));
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.pet-shell[data-state="ready"] .utility-controls,
+.pet-shell[data-collapsed="true"] .utility-controls,
+.pet-shell[data-multi-project="true"] .utility-controls {
+  position: absolute;
+  top: calc(4px * var(--pet-scale));
+  right: calc(9px * var(--pet-scale));
 }
 
 .pet-shell:hover .utility-controls,
 .utility-controls:focus-within {
   opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 .close-button,
 .collapse-button {
   position: relative;
-  width: calc(22px * var(--pet-scale));
-  height: calc(22px * var(--pet-scale));
+  width: calc(20px * var(--pet-scale));
+  height: calc(20px * var(--pet-scale));
   display: block;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 0;
   border-radius: 999px;
   color: rgba(244, 244, 236, 0.84);
   font-size: 0;
   line-height: 0;
-  background: rgba(18, 20, 18, 0.72);
+  background: rgba(255, 255, 255, 0.08);
   cursor: pointer;
-  transition: opacity 120ms ease, background 120ms ease;
+  transition: background 120ms ease, color 120ms ease;
 }
 
 .collapse-button::before,
@@ -104,7 +140,8 @@ body {
 
 .close-button:hover,
 .collapse-button:hover {
-  background: rgba(80, 34, 39, 0.86);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
 }
 
 .collapsed-badge {
@@ -148,8 +185,8 @@ body {
 
 .resize-handle {
   position: absolute;
-  right: calc(18px * var(--pet-scale));
-  bottom: calc(12px * var(--pet-scale));
+  right: calc(9px * var(--pet-scale));
+  bottom: 0;
   z-index: 15;
   width: calc(24px * var(--pet-scale));
   height: calc(24px * var(--pet-scale));
@@ -183,7 +220,6 @@ body {
   transform-origin: center;
 }
 
-.stage:hover .resize-handle,
 .pet-shell:hover .resize-handle,
 .resize-handle:focus-visible,
 .pet-shell[data-resizing="true"] .resize-handle {
@@ -301,6 +337,10 @@ body {
 .pet-shell[data-multi-project="true"] .speech {
   opacity: 0;
   pointer-events: none;
+}
+
+.pet-shell[data-state="ready"] .speech {
+  display: none;
 }
 
 .speech::after {
